@@ -423,8 +423,9 @@ public class CollisionModel {
 			midX = x1;
 		}
 		else{
-			float bottom = (-(x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
-			midX = -(-(y1-y2)*(x2*y1-x1*y2)+(x1-x2)*((x1-x2)*x3-(y1-y2)*y3))/bottom;
+			float k = (y2-y1)/(x2-x1);
+			float b = y2-k*x2;
+			midX = (2*x3-2*k*(b-y3))/(2*k*k+2);
 			midY = (y1-y2)/(x1-x2)*midX+(y2*x1-y1*x2)/(x1-x2);
 		}
 		if((midY-y3)*(midY-y3)+(midX-x3)*(midX-x3)>r*r){

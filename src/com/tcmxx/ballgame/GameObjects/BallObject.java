@@ -13,7 +13,7 @@ public class BallObject extends GameObject {
 	
 	//inner physical features
 	private float radius;
-	public float mass;
+	public float mass=1;
 
 	
 	//outer physical features

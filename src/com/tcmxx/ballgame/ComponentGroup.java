@@ -33,7 +33,7 @@ public class ComponentGroup {
 	}
 	///////////////////////////////////////////////////////////////////
 	public void addObject(Component gameObject, String name, boolean visible){
-		gameObject.rotate(90);
+		gameObject.rotate(0);
 		objectArray.add(gameObject);
 		nameArray.add(name);
 		ifVisibleArray.add(visible);

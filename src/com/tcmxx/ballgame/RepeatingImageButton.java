@@ -7,7 +7,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageButton;
-
+//this is not used now
 public class RepeatingImageButton extends ImageButton {
     private long mStartTime; //记录长按开始
     private int mRepeatCount; //重复次数计数

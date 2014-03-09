@@ -75,7 +75,7 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
 	    this.setKeepScreenOn(true);
 	    setFocusable(true);// for key control
 	    
-	    //test for the file data to build bricks
+	    //read file data to build bricks
 	    String data = readFromAssets(level);
 	    System.out.println(buildBrickGroup(data));
 	    
@@ -99,14 +99,16 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
     
     ////////////////////////////////////////////////////////
     //fresh the frame///////////////////////
+    //this is called by system every cycle
     public void updateFrame(){
 
 	    
     	if(brickGroup.getObjectNum()==0){
     		whetherWin = true;
     	}
-    	head.updateFrame(updateThread.getFPS());
+    	
 	    updateBall();
+	    head.updateFrame(updateThread.getFPS());
     }
     
     ///////////////////////////////////////////////////////////
@@ -168,12 +170,9 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
 		switch(act){
 		case MotionEvent.ACTION_DOWN:
 			//updateThread.setRunning(true);
-			head.getDestionation().x=event.getX()/widthRatio-40;
-			head.getDestionation().y=event.getY()/heightRatio-40;
 			break;
 		case MotionEvent.ACTION_MOVE:
-			head.getDestionation().x=event.getX()/widthRatio-40;
-			head.getDestionation().y=event.getY()/heightRatio-40;
+			head.getPath().addPoint(event.getX()/widthRatio-40, event.getY()/heightRatio-40);
 			break;
 		case MotionEvent.ACTION_UP:
 			break;
@@ -213,8 +212,11 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
 							continue;
 						}
 						else if(tmp == ';'){
-							brickGroup.addObject(new BrickObject(tmpLocation[0],tmpLocation[1],tmpLocation[2],
-									tmpLocation[3]), "brick"+String.valueOf(brickNum), true);
+							BrickObject tmpBrick = new BrickObject(tmpLocation[0],tmpLocation[1],tmpLocation[2],
+									tmpLocation[3]);
+							tmpBrick.loadBitmap(BitmapFactory.decodeResource(res, R.drawable.wood_brick));
+							brickGroup.addObject(tmpBrick, "brick"+String.valueOf(brickNum), true);
+							
 							brickNum++;
 							location = 0;
 							break;
@@ -272,6 +274,7 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
 	
 	//update the ball according to collision
 	private int updateBall(){
+		int FPS = updateThread.getFPS();
 		//////reduce v by time
 		VectorAttr ballMotion = ball.getMotion();
 		if(ballMotion.getValue()>0) ballMotion.setValue(ballMotion.getValue()-1, ballMotion.getAngle());
@@ -279,8 +282,8 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
 		//get ready for update
 
 		
-		ball.setPosition(ball.getX()+ballMotion.getX()/(float)updateThread.getFPS(), 
-				ball.getY()+ballMotion.getY()/(float)updateThread.getFPS());
+		ball.setPosition(ball.getX()+ballMotion.getX()/(float)FPS, 
+				ball.getY()+ballMotion.getY()/(float)FPS);
 		/////Check bricks collision and react
 		PointF wallPoint;
 
@@ -289,12 +292,17 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
 		if((wallPoint = ballWallCollision())!=null){
 			VectorAttr normal = new VectorAttr((wallPoint.x-ball.getX()), (wallPoint.y-ball.getY()));
 			ballMotion.set(VectorAttr.reflectVector(ballMotion, normal));
-			ball.setPosition(ball.getX()+ballMotion.getX()/(float)updateThread.getFPS(), 
-					ball.getY()+ballMotion.getY()/(float)updateThread.getFPS());
+			ball.setPosition(ball.getX()+ballMotion.getX()/(float)FPS, 
+					ball.getY()+ballMotion.getY()/(float)FPS);
 
 		}
 		/////Check head collision and react
-		head.effectBall(ball);
+		if(head.effectBall(ball)==-1){
+			//position adjust if collision
+			head.setPosition(head.getX()+head.getMotion().getX()/FPS, head.getY()+head.getMotion().getY()/FPS);
+			ball.setPosition(ball.getX()+ballMotion.getX()/FPS,
+					ball.getY()+ballMotion.getY()/FPS);
+		}
 		return 0;
 		
 	}

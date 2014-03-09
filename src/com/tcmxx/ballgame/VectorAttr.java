@@ -9,7 +9,9 @@ public class VectorAttr {
 	public VectorAttr(){
 		this(0f,0f);
 	}
-	
+	public VectorAttr(VectorAttr v){
+		this(v.x,v.y);
+	}
 	public VectorAttr(float xx, float yy){
 		x = xx;
 		y = yy;
@@ -43,7 +45,12 @@ public class VectorAttr {
 		this.x = x;
 		this.y = y;
 	}
-	
+	public void add(VectorAttr add){
+		this.setVector(x+add.x, y+add.y);
+	}
+	public void multiply(float a){
+		this.setVector(x*a, y*y);
+	}
 	///////////////////////////////////////////////////////
 	//some utilities
 	public static VectorAttr reflectVector(VectorAttr v, VectorAttr n){
@@ -68,4 +75,14 @@ public class VectorAttr {
 		
 	}
 	
+	////////////////////////////////////////////////////////////////////////
+	//add a vector
+	public static VectorAttr addVector(VectorAttr v, VectorAttr add){
+		return new VectorAttr(v.x+add.x, v.y+add.y);
+	}
+	////////////////////////////////////////////////////////////////////////
+	//multiply a vector with a number float
+	public static VectorAttr mulVector(VectorAttr v, float a){
+		return new VectorAttr(v.x*a, v.y*a);
+	}
 }

@@ -8,7 +8,7 @@ import android.view.SurfaceHolder;
 public class UpdateGraphThread extends Thread {
 	
 	private long time;   
-    private final int FPS = 80;   
+    private final int FPS = 40;   
     private boolean toRun = false;   
     private MovementView movementView;   
     private SurfaceHolder surfaceHolder;   
@@ -45,8 +45,10 @@ public class UpdateGraphThread extends Thread {
                     }   
                 }   
                 //Sleep until, to fix the time per frame
-                if(1000 / FPS-(cTime - time)>0)
+                if(1000f / FPS-(cTime - time)>0)
                 {
+                	System.out.println("frame time"+1000f / FPS);
+                	System.out.println("run time"+(cTime - time));
 	                try {   
 	                    Thread.sleep(1000 / FPS-(cTime - time));   
 	                } catch (Exception e) {   

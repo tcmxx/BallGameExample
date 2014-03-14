@@ -178,7 +178,7 @@ public class CollisionModel {
 			return true;
 		}
 	}
-	//if the points are in closure of another model.
+	//if the points are in closure of another model(input).
 	//this is not accurate!!!!
 	//return the points index that is in closure
 	public ArrayList<Integer> inClosure(CollisionModel o){
@@ -195,9 +195,11 @@ public class CollisionModel {
 				}
 			}
 			for(int k = 0; k<o.circleNum; k++){
-				if(lineState.get(i)==1&&o.circleState.get(k)==1){
-					numOfCol+=lineCircleCollision(o.circleList.get(i).getPosition(), o.circleList.get(i).getRadius(),
-							lineList.get(k).getStart(), lineList.get(k).getEnd()).length;
+				if(o.circleState.get(k)==1){
+					PointF[] tmp = lineCircleCollision(o.circleList.get(k).getPosition(), o.circleList.get(k).getRadius(),
+							rayList.get(i).getStart(), rayList.get(i).getEnd());
+					if(tmp!=null)
+						numOfCol+=(tmp.length);
 				}
 			}
 			if(numOfCol%2!=0){

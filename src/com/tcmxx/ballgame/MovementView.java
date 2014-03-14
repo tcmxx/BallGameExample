@@ -29,8 +29,12 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
 	 private int height; 
 	 private float widthRatio;			//real/standard
 	 private float heightRatio;
-	 //Value for head control, initial for standard dimension
-  
+	 //double click detection variables
+	 static final private long DOUBLE_CLICK_TIME = 200;
+	 static final private float DOUBLE_CLICK_DISTANCE = 100;
+	 long lastClickTime = 0;
+	 float lastClickX = 0;
+	 float lastClickY = 0;
 	 //other parameter
 	 private boolean whetherWin = false;
 	 // data
@@ -41,10 +45,13 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
 	 ComponentGroup brickGroup;		//group that stores bricks
 	 ComponentGroup accessaryGroup;
 	 
+	 boolean newPath=false;
 	 //Thread
 	 UpdateGraphThread updateThread; 
 
-	 
+	public MovementView(Context context){
+		this(context,"0");
+	}
 	public MovementView(Context context, String level) {
 		super(context);
 		// TODO Auto-generated constructor stub
@@ -169,12 +176,44 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
 		int act = event.getActionMasked();
 		switch(act){
 		case MotionEvent.ACTION_DOWN:
-			//updateThread.setRunning(true);
+			long cTime = System.currentTimeMillis();
+			float tmpX = event.getX();
+			float tmpY = event.getY();
+			//if the click interval is small and the distance between
+			//each click is close
+			if(cTime-lastClickTime<DOUBLE_CLICK_TIME&&
+					(tmpX-lastClickX)*(tmpX-lastClickX)+
+					(tmpY-lastClickY)*(tmpY-lastClickY)<=
+					DOUBLE_CLICK_DISTANCE*DOUBLE_CLICK_DISTANCE){
+					head.getPath().clearPath();
+					head.getPath().addPoint(tmpX,tmpY);
+					head.delay=0;
+			}
+			else{
+				//if the touch point is in the head, create new path
+				CollisionModel mPoint = new CollisionModel();
+				mPoint.addPoint(new PointF(0,0), null);
+				mPoint.setNodePosition(event.getX(), event.getY());
+				if(!mPoint.inClosure(head.getCollisionModel()).isEmpty()){
+					newPath=true;
+					head.getPath().clearPath();
+					head.delay=0;
+				}
+			}
+			//update the time and position record
+			lastClickX = tmpX;
+			lastClickY = tmpY;
+			lastClickTime = cTime;
 			break;
 		case MotionEvent.ACTION_MOVE:
-			head.getPath().addPoint(event.getX()/widthRatio-40, event.getY()/heightRatio-40);
+			if(newPath){
+				head.getPath().addPoint(event.getX()/widthRatio, event.getY()/heightRatio);
+			}
+			lastClickX = event.getX();
+			lastClickY =event.getY();
 			break;
 		case MotionEvent.ACTION_UP:
+			newPath=false;
 			break;
 		default:
 			break;

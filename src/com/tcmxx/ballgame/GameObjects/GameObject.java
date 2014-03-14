@@ -2,7 +2,6 @@ package com.tcmxx.ballgame.GameObjects;
 
 import com.tcmxx.ballgame.CollisionModel;
 
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;

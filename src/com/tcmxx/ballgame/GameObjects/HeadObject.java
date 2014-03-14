@@ -22,15 +22,14 @@ public class HeadObject extends GameObject {
 		private PointF destination;
 		
 		//control parameters
-		protected float gainP=20;
-		protected float gainD=10;
+		protected float gainP=40;
+		protected float gainD=5;
 		private float headPosError = 1;
 		float followRate=0.5f; 	//the speed the new destination will follow the path
 								//For example, when it is 0.5, the destination will poll
 								//from the path every 2 frame
-		static int followInterval = 0;	//this is used to implement the followRate
-		float followDelay = 1f;	//The delay before following a new path
-		static float delay=0f;	//current delay
+		public long followDelay = 1000;	//The delay before following a new path
+		public long delay=0;	//current delay
 
 		
 		//recorded path
@@ -119,37 +118,29 @@ public class HeadObject extends GameObject {
 		//////------------motion controls!------------------
 		/////
 		protected void motionControl(int FPS){
-			delay=delay+1/FPS;
-			if(delay<followDelay){
-				return;
-			}
-			else{
+			delay=delay+(long)(1f/(float)FPS*1000);
+			if(delay>=followDelay){
 				//set destination as the new points on the path
 				PointF tmpDes=null;
-				if(followInterval>=1/followRate-1){
-					for(int i =0;i<followRate;i++){
-						tmpDes= mPath.pollPoint();
-					}
-					followInterval=0;
-				}
-				else{
-					followInterval++;
+				if(mPath.getTimeFromLastPoll()>=mPath.getNextInterval()/followRate){
+					tmpDes= mPath.pollPoint();
 				}
 				if(tmpDes!=null){
 					destination = tmpDes;
 				}
-				//if there is a destination, use control strategy
-				if(destination!=null){
-					float dist = (float)Math.sqrt(((xPos-destination.x)*(xPos-destination.x)
-			    			+(yPos-destination.y)*(yPos-destination.y)));
-			    	if(dist<=headPosError){
-			    		motionAttr.setVector(0,0);
-			    		destination = null;
-			    	}
-			    	else{
-			    		PDControl(FPS);
-			    	}
-				}
+			}
+			//if there is a destination, use control strategy
+			if(destination!=null){
+				float dist = (float)Math.sqrt(((xPos-destination.x)*(xPos-destination.x)
+		    			+(yPos-destination.y)*(yPos-destination.y)));
+		    	if(dist<=headPosError&&mPath.length==0){
+		    		motionAttr.setVector(0,0);
+		    		destination = null;
+		    		delay=0;
+		    	}
+		    	else{
+		    		PDControl(FPS);
+		    	}
 			}
 		}
 		//pd control for destination

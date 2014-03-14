@@ -2,17 +2,15 @@ package com.tcmxx.ballgame.GameObjects;
 
 import java.util.ArrayList;
 
-import android.graphics.BitmapFactory;
+
 import android.graphics.Canvas;
-import android.graphics.Canvas.VertexMode;
+
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
+
 import android.graphics.Path;
 import android.graphics.PointF;
-import android.graphics.RectF;
 
-import com.tcmxx.ballgame.R;
 import com.tcmxx.ballgame.VectorAttr;
 
 public class BrickObject extends Component {

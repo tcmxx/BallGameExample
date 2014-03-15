@@ -1,3 +1,5 @@
 BallGameExample
 ===============
-This is my bouncing ball game for Android. 
+This is Xiaoxiao Ma's bouncing ball game for Android. 
+
+All Right Reserved.

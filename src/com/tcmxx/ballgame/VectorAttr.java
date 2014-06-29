@@ -16,7 +16,7 @@ public class VectorAttr {
 		x = xx;
 		y = yy;
 		value=(float)Math.sqrt(x*x+y*y);
-		angle=(float)Math.atan2(y, x);
+		angle=(float)Math.atan2(y, x)/(float)Math.PI*180;
 	}
 	public float getValue(){
 		return value;
@@ -84,5 +84,10 @@ public class VectorAttr {
 	//multiply a vector with a number float
 	public static VectorAttr mulVector(VectorAttr v, float a){
 		return new VectorAttr(v.x*a, v.y*a);
+	}
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		// TODO Auto-generated method stub
+		return super.clone();
 	}
 }

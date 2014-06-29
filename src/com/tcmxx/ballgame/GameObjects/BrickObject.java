@@ -51,7 +51,7 @@ public class BrickObject extends Component {
 		collisionModel.setCollisionRadius((float)Math.sqrt(width*width+height*height)/2);
 		collisionModel.setNodePosition(xPos, yPos);
 		
-		//test for bmt load and draw
+		lives = 1;
 		
 
 	}
@@ -140,12 +140,16 @@ public class BrickObject extends Component {
 	}
 	
 	//called every frame for each brick
-	public int effectBall(BallObject ball){
+	public int effectBall(BallObject ball, int FPS){
 		ArrayList<PointF> collisionPoints=ball.getCollisionModel().detectCollision(collisionModel);
 		if(collisionPoints.size()==0){
 			return 0;
 		}
 		else{
+			//go back to the position before collision
+			float newPosX = ball.getX()-ball.getMotion().getX()/(float)FPS; 
+			float newPosY =	ball.getY()-ball.getMotion().getY()/(float)FPS;
+			
 			PointF point = new PointF(0,0);
 			for(int i = 0;i<collisionPoints.size();i++){
 				point.x+=collisionPoints.get(i).x;
@@ -158,9 +162,47 @@ public class BrickObject extends Component {
 			VectorAttr normal = new VectorAttr((point.x-ball.getX()), (point.y-ball.getY()));
 			v.set(VectorAttr.reflectVector(v, normal));
 			v.setValue(v.getValue()*stiffCoef, v.getAngle());
-			return -1;		//hit the ball
+			
+			ball.setPosition(newPosX, newPosY);
+			lives--;
+			if(lives==0){
+				return -1;		//hit the ball
+			} else{
+				return 0;
+			}
 		}
 		
 	}
-	public int effectHead(HeadObject head){return 1;}
+	public int effectHead(HeadObject head, int FPS){
+		ArrayList<PointF> collisionPoints=head.getCollisionModel().detectCollision(collisionModel);
+		if(collisionPoints.size()==0){
+			return 0;
+		}
+		else{
+			//goback to the position before collision
+			float newPosX = head.getX()-head.getMotion().getX()/(float)FPS; 
+			float newPosY =	head.getY()-head.getMotion().getY()/(float)FPS;
+			
+			PointF point = new PointF(0,0);
+			for(int i = 0;i<collisionPoints.size();i++){
+				point.x+=collisionPoints.get(i).x;
+				point.y+=collisionPoints.get(i).y;
+				
+			}
+			point.x = point.x/collisionPoints.size();
+			point.y = point.y/collisionPoints.size();
+			VectorAttr v = head.getMotion();
+			VectorAttr normal = new VectorAttr((point.x-head.getX()), (point.y-head.getY()));
+			v.set(VectorAttr.reflectVector(v, normal));
+			v.setValue(v.getValue()*stiffCoef, v.getAngle());
+			
+			head.setPosition(newPosX, newPosY);
+			lives--;
+			if(lives==0){
+				return -1;		//hit the ball
+			} else{
+				return 0;
+			}
+		}
+	}
 }

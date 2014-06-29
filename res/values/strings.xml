@@ -7,4 +7,5 @@
     <string name="you_win">You Win!</string>
     <string name="ball_game">Ballgame</string>
 	<string name="select_level">Please input a level and press go!</string>
+	<string name="start">Start</string>
 </resources>

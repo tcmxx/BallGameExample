@@ -23,20 +23,26 @@ public final class R {
     public static final class drawable {
         public static final int head2=0x7f020000;
         public static final int ic_launcher=0x7f020001;
-        public static final int mag=0x7f020002;
-        public static final int stone_brick=0x7f020003;
-        public static final int wood_brick=0x7f020004;
-        public static final int you_win=0x7f020005;
+        public static final int indoor=0x7f020002;
+        public static final int mag=0x7f020003;
+        public static final int outdoor=0x7f020004;
+        public static final int stone_brick=0x7f020005;
+        public static final int wood_brick=0x7f020006;
+        public static final int you_win=0x7f020007;
     }
     public static final class id {
-        public static final int action_settings=0x7f080003;
+        public static final int action_settings=0x7f080006;
         public static final int buttonGo=0x7f080000;
         public static final int editLevel=0x7f080002;
-        public static final int textView1=0x7f080001;
+        public static final int mainLayout=0x7f080003;
+        public static final int startButton=0x7f080004;
+        public static final int textLife=0x7f080005;
+        public static final int textTime=0x7f080001;
     }
     public static final class layout {
         public static final int activity_beginning=0x7f030000;
         public static final int activity_main=0x7f030001;
+        public static final int inflayout=0x7f030002;
     }
     public static final class menu {
         public static final int beginning=0x7f070000;
@@ -48,6 +54,7 @@ public final class R {
         public static final int ball_game=0x7f050004;
         public static final int go=0x7f050002;
         public static final int select_level=0x7f050005;
+        public static final int start=0x7f050006;
         public static final int you_win=0x7f050003;
     }
     public static final class style {

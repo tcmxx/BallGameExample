@@ -12,7 +12,7 @@ import android.graphics.PointF;
 public class HeadObject extends GameObject {
 		//inner physical features
 		private float radius;
-		public float mass=1;
+		public float mass=10;
 
 		//outer physical features
 		public float friction;
@@ -31,6 +31,10 @@ public class HeadObject extends GameObject {
 		public long followDelay = 1000;	//The delay before following a new path
 		public long delay=0;	//current delay
 
+		//the status of the current head
+		//it will be examed every frame
+		public enum HeadStatus {NORMAL, PAUSE, NEXTLEVEL}
+		public HeadStatus status;
 		
 		//recorded path
 		MovePath mPath;
@@ -38,6 +42,7 @@ public class HeadObject extends GameObject {
 		//methods
 		public HeadObject(float x, float y, float r){
 			super();
+			status = HeadStatus.NORMAL;
 			radius = r;
 			collisionRadius = r;
 			super.setPosition(x, y);
@@ -52,6 +57,14 @@ public class HeadObject extends GameObject {
 		}
 		public HeadObject(){
 			this(0.0f,0.0f,0.0f);
+		}
+		public HeadObject(HeadObject head){
+			
+		}
+		
+		@Override
+		public Object clone() throws CloneNotSupportedException {
+			return super.clone();
 		}
 		public void setRadius(float r){
 			radius = r;
@@ -75,12 +88,18 @@ public class HeadObject extends GameObject {
 			return motionAttr;
 		}
 		
-		public int effectBall(BallObject ball){
+		public int effectBall(BallObject ball, int FPS){
 			ArrayList<PointF> collisionPoints = collisionModel.detectCollision(ball.getCollisionModel());
 			if(collisionPoints.size()==0){
 				return 0;
 			}
 			else{
+				//head & ball go back to the position before collision(record position)
+				float newHPosX = this.getX()-this.getMotion().getX()/(float)FPS; 
+				float newHPosY = this.getY()-this.getMotion().getY()/(float)FPS;
+				//float newBPosX = ball.getX()-ball.getMotion().getX()/(float)FPS; 
+				//float newBPosY = ball.getY()-ball.getMotion().getY()/(float)FPS;
+				
 				PointF point = new PointF(0,0);
 				for(int i = 0;i<collisionPoints.size();i++){
 					point.x+=collisionPoints.get(i).x;
@@ -95,11 +114,16 @@ public class HeadObject extends GameObject {
 				VectorAttr vRelated = new VectorAttr(tmpVX,tmpVY);
 				VectorAttr normal = new VectorAttr((ball.getX()-point.x), (ball.getY()-point.y));
 				VectorAttr vnRelated = VectorAttr.projectVector(vRelated, normal);
+				VectorAttr vtRelated = new VectorAttr(vRelated.getX()-vnRelated.getX(),
+						vRelated.getY()-vnRelated.getY());
 				VectorAttr dvHead = VectorAttr.mulVector(vnRelated, 2*ball.mass/(mass+ball.mass));
 				VectorAttr dvBall = VectorAttr.mulVector(vnRelated, (-mass+ball.mass)/(mass+ball.mass));
 				
-				ballMotion.set(VectorAttr.addVector(dvBall,motionAttr));
+				ballMotion.set(VectorAttr.addVector(vtRelated,VectorAttr.addVector(dvBall,motionAttr)));
 				motionAttr.add(dvHead);
+				
+				this.setPosition(newHPosX, newHPosY);
+				//ball.setPosition(newBPosX, newBPosY);
 				return -1;
 			}
 		}

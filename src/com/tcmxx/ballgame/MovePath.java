@@ -20,9 +20,10 @@ public class MovePath{
 											//previous and this point. The first value is 0
 	long lastAddTime; 							//the system time last point is added
 	long lastPollTime;						//the system time last point is polled
-	int maxLength;
+	long totalTime;							//the time length of the path
+	long maxTime;							//the max total time of the path that can be stored
 	public int length;						//the length of this path, which will not
-											//be reduced when points are polled.
+											
 	boolean ifAdd = true;					//Whether add new path when calling addPoint
 											
 	
@@ -32,13 +33,11 @@ public class MovePath{
 		mPaint = new Paint();
 		mPaint.setColor(Color.BLACK);
 		mPaint.setAntiAlias(true);  
-		/**画笔的类型**/  
-		mPaint.setStyle(Paint.Style.STROKE);  
-		/**设置画笔变为圆滑状**/  
+		mPaint.setStyle(Paint.Style.STROKE);   
 		mPaint.setStrokeCap(Paint.Cap.ROUND);  
-		/**设置线的宽度**/  
 		mPaint.setStrokeWidth(5);
-		maxLength = l;
+		maxTime = 0;
+		totalTime = 0;
 		lastAddTime=0;
 		lastPollTime=0;
 	}
@@ -46,7 +45,7 @@ public class MovePath{
 	
 	//add a new point to the path
 	public boolean addPoint(float x, float y){
-		if(length >= maxLength&&ifAdd){
+		if((totalTime >= maxTime&&ifAdd&&maxTime>0)||!ifAdd){
 			ifAdd = false;
 			return false;
 		}
@@ -57,6 +56,7 @@ public class MovePath{
 			}
 			pointsList.add(new PointF(x,y));
 			intervalList.add(cTime-lastAddTime);
+			totalTime += cTime-lastAddTime;
 			lastAddTime = cTime;
 			length = pointsList.size();
 			return true;
@@ -70,7 +70,7 @@ public class MovePath{
 		}
 		else{
 			PointF tmp = pointsList.remove(0);
-			intervalList.remove(0);
+			totalTime -=intervalList.remove(0);
 			lastPollTime=System.currentTimeMillis();  
 			length = pointsList.size();
 			//length = pointsList.size();

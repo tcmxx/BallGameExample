@@ -4,12 +4,15 @@ package com.tcmxx.ballgame;
 import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 
 import com.tcmxx.ballgame.GameObjects.BallObject;
 import com.tcmxx.ballgame.GameObjects.BrickObject;
+import com.tcmxx.ballgame.GameObjects.Ejection;
 import com.tcmxx.ballgame.GameObjects.GameObject;
 import com.tcmxx.ballgame.GameObjects.HeadObject;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.view.KeyEvent;
@@ -17,9 +20,12 @@ import android.view.MotionEvent;
 import android.view.SurfaceView;  
 import android.graphics.*;     
 import android.view.SurfaceHolder;   
+import android.widget.Button;
+import android.widget.TextView;
 
 
 public class MovementView extends SurfaceView implements SurfaceHolder.Callback, KeyEvent.Callback{
+
 	
 	//the standard dimension that brick data basing on
 	 static final private int STANDARD_HEIGHT = 1280;
@@ -31,7 +37,7 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
 	 private float heightRatio;
 	 //double click detection variables
 	 static final private long DOUBLE_CLICK_TIME = 200;
-	 static final private float DOUBLE_CLICK_DISTANCE = 100;
+	 static final private float DOUBLE_CLICK_DISTANCE = 50;
 	 long lastClickTime = 0;
 	 float lastClickX = 0;
 	 float lastClickY = 0;
@@ -41,53 +47,77 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
 	 private Resources res;
 	 GameObject winPic; 
 	 HeadObject head;
+	 HeadObject oldHead;
 	 BallObject ball;
-	 ComponentGroup brickGroup;		//group that stores bricks
-	 ComponentGroup accessaryGroup;
+	 public ComponentGroup brickGroup;		//group that stores bricks
+	 ArrayList<Ejection> ejectionGroup;
 	 
 	 boolean newPath=false;
 	 //Thread
 	 UpdateGraphThread updateThread; 
+	 //widget object
+	 Context mContext;
+	 public TextView timeView;
+	 public TextView lifeView;
+	 public Button startButton;
 
-	public MovementView(Context context){
-		this(context,"0");
-	}
-	public MovementView(Context context, String level) {
+
+	public MovementView(Context context) {
 		super(context);
-		// TODO Auto-generated constructor stub
 		getHolder().addCallback(this);   
-		//Get the dimension parameters
 
+		mContext = context;
 
 		//get,create and initial the data 
 	    res = this.getResources();  
 	    
-	    winPic = new GameObject();
-	    winPic.setPosition(80, 500);
-	    
 	    head = new HeadObject(360, 1000,40);
-
-	    ball = new BallObject(0,0,20);
-
 	    head.getPaint().setColor(Color.BLUE);
 	    head.getPaint().setAntiAlias(true);
-
 	    head.getCollisionModel().setCollisionRadius(100);
-	    ball.getPaint().setColor(Color.BLUE);
-	    ball.setPosition(500, 400);
 	    head.loadBitmap(BitmapFactory.decodeResource(res, R.drawable.head2));
-	    winPic.loadBitmap(BitmapFactory.decodeResource(res, R.drawable.you_win));
-	    brickGroup = new ComponentGroup();
-	    
+	    try{
+	    	oldHead = (HeadObject)head.clone();
+	    }catch(Exception e){
+	    }finally{	
+	    }
+	    ejectionGroup = new ArrayList<Ejection>();
 	    this.setKeepScreenOn(true);
 	    setFocusable(true);// for key control
 	    
-	    //read file data to build bricks
-	    String data = readFromAssets(level);
-	    System.out.println(buildBrickGroup(data));
+	    
 	    
 	}
+	
+	//////////////////////////////////////////////////////
+	//this will load and initialize a new level while keeping the head the as input
+	//if fail, return false
+	protected boolean initializeLevel(String level){
 
+		startButton.setText(R.string.start);
+		
+	    ball = new BallObject(0,0,20);
+	    ball.getPaint().setColor(Color.BLUE);
+	    ball.setPosition(500, 400);
+	    
+	    winPic = new GameObject();
+	    winPic.setPosition(80, 500);
+	    winPic.loadBitmap(BitmapFactory.decodeResource(res, R.drawable.you_win));
+	    brickGroup = new ComponentGroup();
+	    
+	    //read file data to build bricks
+	    //String data = readFromAssets(level);
+	    SceneParser parser = new SceneParser();
+    	try{ 
+    		parser.parse(getResources().getAssets().open(level), this, res);
+    	}catch (Exception e){
+			e.printStackTrace();
+		}
+	    //
+	    //System.out.println(buildBrickGroup(data));
+		return true;
+	}
+	
 	/////////////////////////////////////////////
 	//After update Frame , call it to draw the new canvas
     protected void drawFrame(Canvas canvas) {   
@@ -99,7 +129,10 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
             head.draw(canvas);
             ball.draw(canvas);
             brickGroup.drawAll(canvas);
-            
+
+        	for(int i = 0;i<ejectionGroup.size();i++){
+        		ejectionGroup.get(i).draw(canvas);
+        	}
             
    
     }  
@@ -108,14 +141,20 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
     //fresh the frame///////////////////////
     //this is called by system every cycle
     public void updateFrame(){
-
-	    
+    	
+    	head.updateFrame(updateThread.getFPS());
+    	for(int i = 0;i<ejectionGroup.size();i++){
+    		if(ejectionGroup.get(i).update(brickGroup, ball)==-1){
+    			ejectionGroup.remove(i);
+    			i--;
+    		}
+    	}
     	if(brickGroup.getObjectNum()==0){
     		whetherWin = true;
     	}
     	
 	    updateBall();
-	    head.updateFrame(updateThread.getFPS());
+	    headComponentsEffect();
     }
     
     ///////////////////////////////////////////////////////////
@@ -177,8 +216,8 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
 		switch(act){
 		case MotionEvent.ACTION_DOWN:
 			long cTime = System.currentTimeMillis();
-			float tmpX = event.getX();
-			float tmpY = event.getY();
+			float tmpX = event.getX()/widthRatio;
+			float tmpY = event.getY()/heightRatio;
 			//if the click interval is small and the distance between
 			//each click is close
 			if(cTime-lastClickTime<DOUBLE_CLICK_TIME&&
@@ -188,16 +227,20 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
 					head.getPath().clearPath();
 					head.getPath().addPoint(tmpX,tmpY);
 					head.delay=0;
+					
 			}
 			else{
-				//if the touch point is in the head, create new path
+				
 				CollisionModel mPoint = new CollisionModel();
 				mPoint.addPoint(new PointF(0,0), null);
-				mPoint.setNodePosition(event.getX(), event.getY());
+				mPoint.setNodePosition(event.getX()/widthRatio, event.getY()/heightRatio);
+				//if the touch point is in the head, create new path
 				if(!mPoint.inClosure(head.getCollisionModel()).isEmpty()){
 					newPath=true;
 					head.getPath().clearPath();
 					head.delay=0;
+				}else{
+					//if not in the head, calculate ejection
 				}
 			}
 			//update the time and position record
@@ -209,10 +252,24 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
 			if(newPath){
 				head.getPath().addPoint(event.getX()/widthRatio, event.getY()/heightRatio);
 			}
-			lastClickX = event.getX();
-			lastClickY =event.getY();
+			
+			//lastClickX = event.getX();
+			//lastClickY =event.getY();
 			break;
 		case MotionEvent.ACTION_UP:
+			float upX = event.getX()/widthRatio;
+			float upY = event.getY()/heightRatio;
+			float moveDist = (float) Math.sqrt((upX-lastClickX)*(upX-lastClickX)+
+					(upY-lastClickY)*(upY-lastClickY));
+			if(!newPath&&moveDist>5){
+				//create ejection
+				
+				long moveTime = System.currentTimeMillis()-lastClickTime;
+				VectorAttr moveVel = new VectorAttr((upX-lastClickX)/moveTime*300,(upY-lastClickY)/moveTime*300);
+				ejectionGroup.add(new Ejection(new PointF(head.getX(), head.getY()),moveVel,(int) moveDist/50));
+				ejectionGroup.get(ejectionGroup.size()-1).start(brickGroup,head);
+				lastClickTime = 0;
+			} 
 			newPath=false;
 			break;
 		default:
@@ -223,6 +280,7 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
 
 	//////////////////////////////////////////////////////
 	//Build the bricksGroup from the data string// 
+	//not used now
 	public boolean buildBrickGroup(String data){
 		int brickNum = 0;
 		char tmp;
@@ -283,65 +341,47 @@ public class MovementView extends SurfaceView implements SurfaceHolder.Callback,
 	/////////////////////////////////////////////////////
 	//detect ball and bricks collision in bricks group///
 	private void ballBricksCollision(){
+		int FPS = updateThread.getFPS();
 		for(int i = 0; i<brickGroup.getObjectNum();i++){
-			if(brickGroup.getGameObjectByIndex(i).effectBall(ball)==-1){
+			if(brickGroup.getGameObjectByIndex(i).effectBall(ball, FPS)==-1){
 				brickGroup.removeObjectByIndex(i);
 			}
 		}
 	}
 	/////////////////////////////////////////////////////////
-	private PointF ballWallCollision(){
-		if(ball.getX()+ball.getRadius()>=width/widthRatio){
-			return new PointF(ball.getX()+ball.getRadius(), ball.getY());
-		}
-		else if(ball.getX()-ball.getRadius()<=0){
-			return new PointF(ball.getX()-ball.getRadius(), ball.getY());
-		}
-		else if(ball.getY()-ball.getRadius()<=0){
-			return new PointF(ball.getX(), ball.getY()-ball.getRadius());
-		}
-		else if(ball.getY()+ball.getRadius()>=height/heightRatio){
-			return new PointF(ball.getX(), ball.getY()+ball.getRadius());
-		}
-		else{
-			return null;
+	///////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////
+	//detect head and bricks collision in bricks group///
+	private void headComponentsEffect(){
+		int FPS = updateThread.getFPS();
+		for(int i = 0; i<brickGroup.getObjectNum();i++){
+			if(brickGroup.getGameObjectByIndex(i).effectHead(head, FPS)==-1){
+				brickGroup.removeObjectByIndex(i);
+			}
 		}
 	}
+	/////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////
-
 	
 	
 	//update the ball according to collision
 	private int updateBall(){
 		int FPS = updateThread.getFPS();
-		//////reduce v by time
 		VectorAttr ballMotion = ball.getMotion();
-		if(ballMotion.getValue()>0) ballMotion.setValue(ballMotion.getValue()-1, ballMotion.getAngle());
-		else ballMotion.setValue(0, 0);
 		//get ready for update
 
-		
+		/////Check head collision and react
+		if(head.effectBall(ball, FPS)==-1){
+			//position adjust if collision
+			//head.setPosition(head.getX()+head.getMotion().getX()/FPS, head.getY()+head.getMotion().getY()/FPS);
+			//ball.setPosition(ball.getX()+ballMotion.getX()/FPS,
+					//ball.getY()+ballMotion.getY()/FPS);
+		}
 		ball.setPosition(ball.getX()+ballMotion.getX()/(float)FPS, 
 				ball.getY()+ballMotion.getY()/(float)FPS);
 		/////Check bricks collision and react
-		PointF wallPoint;
 
 		ballBricksCollision();
-		/////Check walls collision and react
-		if((wallPoint = ballWallCollision())!=null){
-			VectorAttr normal = new VectorAttr((wallPoint.x-ball.getX()), (wallPoint.y-ball.getY()));
-			ballMotion.set(VectorAttr.reflectVector(ballMotion, normal));
-			ball.setPosition(ball.getX()+ballMotion.getX()/(float)FPS, 
-					ball.getY()+ballMotion.getY()/(float)FPS);
-
-		}
-		/////Check head collision and react
-		if(head.effectBall(ball)==-1){
-			//position adjust if collision
-			head.setPosition(head.getX()+head.getMotion().getX()/FPS, head.getY()+head.getMotion().getY()/FPS);
-			ball.setPosition(ball.getX()+ballMotion.getX()/FPS,
-					ball.getY()+ballMotion.getY()/FPS);
-		}
 		return 0;
 		
 	}

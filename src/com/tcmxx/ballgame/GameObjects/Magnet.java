@@ -11,13 +11,13 @@ public class Magnet extends Component {
 	
 	
 	@Override
-	public int effectBall(BallObject ball) {
+	public int effectBall(BallObject ball, int FPS) {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
-	public int effectHead(HeadObject head) {
+	public int effectHead(HeadObject head, int FPS) {
 		// TODO Auto-generated method stub
 		return 0;
 	}

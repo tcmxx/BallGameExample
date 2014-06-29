@@ -1,5 +1,5 @@
 BallGameExample
 ===============
 This is Xiaoxiao Ma's bouncing ball game for Android. 
-
-All Right Reserved.
+tcmxx@umich.edu
+All Right Reserved 2014.
